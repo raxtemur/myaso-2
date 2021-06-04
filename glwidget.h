@@ -1,6 +1,7 @@
 #ifndef _my_widget
 #define _my_widget
 
+#include <sstream>
 #include"function.h"
 
 #include <QOpenGLWidget>
@@ -19,6 +20,7 @@ class myGLWidget:public QOpenGLWidget
     int nx, ny, mode, acc_mode;
     double p;
     double x_step, y_step;
+    std::stringstream out;
 
   protected:
 	virtual void paintGL();
@@ -40,6 +42,7 @@ class myGLWidget:public QOpenGLWidget
     void sourceGraph();
     void approximationGraph1();
     void approximationGraph2();
+    void debugOut();
 
     float	angle_h, angle_v;
 	float	camera_p;

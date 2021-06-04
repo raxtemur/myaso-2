@@ -196,7 +196,7 @@ void generateA(double *A, double h)
         A[i] = 0;
     }
     A[0] = 1;
-
+    A[5] = 1;
     A[8] = -(3/(h*h));     A[9] = -(2/(h));
     A[10] = (3/(h*h));     A[11] = -(1/(h));
     A[12] = (2/(h*h*h));     A[13] = (1/(h*h));
@@ -205,18 +205,13 @@ void generateA(double *A, double h)
 
 
 
-void supeRcoeffsErmit(double *X, double *Y, double **FF, double C[4][4], int ii, int jj)
+void supeRcoeffsErmit(double *X, double *Y, double **FF, double C[4][4], int ii, int jj, double *Ax, double *AyT, double *F)
 {
-    double *Ax, *AyT, *F;
     double hx, hy;
 
-    F = new double[16];
     for (int i=0; i<4; i++)
         for (int j=0; j<4; j++)
             F[4*i+j] = 0;
-
-    Ax = new double[16];
-    AyT = new double[16];
 
     hx = X[ii+1] - X[ii];
     hy = Y[jj+1] - Y[jj];

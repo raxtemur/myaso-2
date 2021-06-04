@@ -45,6 +45,6 @@ void coeffsErmit(double *X, double *Y, double ****FF, double C[2][2][2][2], int 
 //void coeffsSlpine(int N, double *X, double *F, double *DF, double *C, double x00, double xn1, double fx00, double fxn1);
 
 
-void supeRcoeffsErmit(double *X, double *Y, double **FF, double C[4][4], int i, int j);
+void supeRcoeffsErmit(double *X, double *Y, double **FF, double C[4][4], int i, int j, double *Ax, double *AyT, double *F);
 
 #endif // FUNCTION_H

@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <QtWidgets/QMessageBox>
+#include <sstream>
 
 #define MIN(a, b) ((a) > (b) ? (b) : (a))
 #define MAX(a, b) ((a) < (b) ? (b) : (a))
@@ -182,6 +184,8 @@ void myGLWidget::keyPressEvent(QKeyEvent* e)
     case Qt::Key_1:
         change_func();
         break;
+    case Qt::Key_D:
+        debugOut();
 
     }
 
@@ -244,9 +248,15 @@ void myGLWidget::sourceGraph()
 void myGLWidget::approximationGraph1()
 {
     //double x1, x2, y1, y2;
+    bool hardDebug = 0;
     double coeffs[4][4];
     double	z1, z2, z3, z4, z;
-    Q_UNUSED(z);
+    double *Ax, *AyT, *F;
+
+
+    F = new double[16];
+    Ax = new double[16];
+    AyT = new double[16];
 
     glBegin(GL_QUADS);
 
@@ -255,17 +265,43 @@ void myGLWidget::approximationGraph1()
     {
         for (int j=0; j < ny; j++)
         {
-            supeRcoeffsErmit(X, Y, FF, coeffs, i, j);
-            z = Pf1(X[i], X[i],           Y[j], Y[j],          coeffs);
+            supeRcoeffsErmit(X, Y, FF, coeffs, i, j, Ax, AyT, F);
 
-            printf("Matrix i, j: %d, %d\n", i, j);
-            for (int k=0; k < 4; k++)
+
+            if (hardDebug && (nx*ny < 10))
             {
-                for (int l=0; l<4; l++)
+                out.precision(3);
+                out.str("");
+                out << "\n i, j: " << i << j << "\n";
+                out << "\n Ax:\n";
+                for (int k=0; k < 4; k++)
                 {
-                    printf("%10.2e  ", coeffs[k][l]);
+                    for (int l=0; l < 4; l++)
+                    {
+                        out << std::fixed <<  Ax[k*4 + l] << "    ";
+                    }
+                    out << "\n";
                 }
-                printf("\n");
+                out << "\n AyT:\n";
+                for (int k=0; k < 4; k++)
+                {
+                    for (int l=0; l < 4; l++)
+                    {
+                        out << std::fixed <<  AyT[k*4 + l] << "    ";
+                    }
+                    out << "\n";
+                }
+                out << "\n coeffs:\n";
+                for (int k=0; k < 4; k++)
+                {
+                    for (int l=0; l < 4; l++)
+                    {
+                        out << std::fixed <<  coeffs[k][l] << "    ";
+                    }
+                    out << "\n";
+                }
+                QMessageBox::warning(0, "Coeffs", QString::fromStdString(out.str()));
+
             }
 
             for (double x = X[i]; x - X[i+1] < x_step; x+=x_step)
@@ -291,6 +327,25 @@ void myGLWidget::approximationGraph1()
 
 
     glEnd();
+}
+
+void myGLWidget::debugOut()
+{
+    std::stringstream out;
+    out.precision(3);
+    //out << "Matrix i, j: " << i << j << "\n";
+    for (int k=0; k < 2*(nx+1); k++)
+    {
+        for (int l=0; l < 2*(ny+1); l++)
+        {
+            out << std::fixed <<  FF[k][l] << "    ";
+        }
+        out << "\n";
+    }
+    QMessageBox::warning(0, "Matrix", QString::fromStdString(out.str()));
+
+
+
 }
 
 void myGLWidget::paintGL()
