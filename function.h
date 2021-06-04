@@ -38,4 +38,13 @@ double DxDyf_6(double, double);
 double DxDyf_7(double, double);
 
 
+double Pf1(double x, double x1, double y, double y1, double C[4][4]);
+//double Pf2(double x, double x1, double x2, double C[2][2][2][2], int i);//C - coeffs
+
+void coeffsErmit(double *X, double *Y, double ****FF, double C[2][2][2][2], int i, int j);
+//void coeffsSlpine(int N, double *X, double *F, double *DF, double *C, double x00, double xn1, double fx00, double fxn1);
+
+
+void supeRcoeffsErmit(double *X, double *Y, double **FF, double C[4][4], int i, int j);
+
 #endif // FUNCTION_H
