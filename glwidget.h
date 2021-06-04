@@ -21,6 +21,8 @@ class myGLWidget:public QOpenGLWidget
 
     double (*f)(double, double);
     double (*dxf)(double, double);
+    double (*dyf)(double, double);
+    double (*dxyf)(double, double);
 
 	void setProjectionMatrix();
 	void setDefaultCamera();

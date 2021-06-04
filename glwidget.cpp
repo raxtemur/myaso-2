@@ -6,13 +6,18 @@
 #define MIN(a, b) ((a) > (b) ? (b) : (a))
 #define MAX(a, b) ((a) < (b) ? (b) : (a))
 
+#define X_RESOLUTION 30
+#define Y_RESOLUTION 30
+
 void myGLWidget::initializeGL()
 {
 	glClearColor(1.0, 1.0, 1.0, 1.0);
 
 	setDefaultCamera();
 
-    f = f_0;
+    func_id = -1;
+
+    change_func();
 }
 
 void myGLWidget::paintGL()
@@ -29,32 +34,33 @@ void myGLWidget::paintGL()
 */
 	glBegin(GL_QUADS);
 
-	int	x_n = 30, y_n = 30;
 	double	x_min = -1, x_max = 1,
 		y_min = -1, y_max = 1;
+    double x_step = (x_max - x_min) / X_RESOLUTION,
+           y_step = (y_max - y_min) / Y_RESOLUTION;
 
 	glColor3d(1.0,0.0,0.0);
 
-	for (int i = 0; i < x_n - 1; i++)
-		for (int j = 0; j < y_n - 1; j++) {
+    for (int i = 0; i < X_RESOLUTION; i++)
+        for (int j = 0; j < Y_RESOLUTION; j++) {
 			double	x, y, z;
 
-			glColor3d(1.0 * (x_n - i) / x_n, 1.0 * j / y_n, 0.0);
+            glColor3d(1.0 * (X_RESOLUTION - i) / X_RESOLUTION, 1.0 * j / Y_RESOLUTION, 0.0);
 
-			x = (x_max - x_min) * i / (x_n - 1) + x_min;
-			y = (y_max - y_min) * j / (y_n - 1) + y_min;
+            x = x_step * i + x_min;
+            y = y_step * j + y_min;
             z = f(x, y);
 			glVertex3d(x, y, z);
-			x = (x_max - x_min) * (i + 1) / (x_n - 1) + x_min;
-			y = (y_max - y_min) * j / (y_n - 1) + y_min;
+            x = x_step * (i + 1) + x_min;
+            y = y_step * j + y_min;
             z = f(x, y);
 			glVertex3d(x, y, z);
-			x = (x_max - x_min) * (i + 1) / (x_n - 1) + x_min;
-			y = (y_max - y_min) * (j + 1) / (y_n - 1) + y_min;
+            x = x_step * (i + 1) + x_min;
+            y = y_step * (j + 1) + y_min;
             z = f(x, y);
 			glVertex3d(x, y, z);
-			x = (x_max - x_min) * i / (x_n - 1) + x_min;
-			y = (y_max - y_min) * (j + 1) / (y_n - 1) + y_min;
+            x = x_step * i + x_min;
+            y = y_step * (j + 1) + y_min;
             z = f(x, y);
 			glVertex3d(x, y, z);
 		}
@@ -169,42 +175,58 @@ void myGLWidget::change_func()
     case 0:
         f_name = "f (x) = 1";
         f = f_0;
-        //dxf = Dxf_0;
+        dxf = Dxf_0;
+        dyf = Dyf_0;
+        dxyf = DxDyf_0;
         break;
     case 1:
         f_name = "f (x) = x";
         f = f_1;
-        //df = Df_1;
+        dxf = Dxf_1;
+        dyf = Dyf_1;
+        dxyf = DxDyf_1;
         break;
     case 2:
         f_name = "f (x) = x*x";
         f = f_2;
-        //df = Df_2;
+        dxf = Dxf_2;
+        dyf = Dyf_2;
+        dxyf = DxDyf_2;
         break;
     case 3:
         f_name = "f (x) = x*x*x";
         f = f_3;
-        //df = Df_3;
+        dxf = Dxf_3;
+        dyf = Dyf_3;
+        dxyf = DxDyf_3;
         break;
     case 4:
         f_name = "f (x) = x*x*x*x";
         f = f_4;
-        //df = Df_4;
+        dxf = Dxf_4;
+        dyf = Dyf_4;
+        dxyf = DxDyf_4;
         break;
     case 5:
         f_name = "f (x) = exp(x)";
         f = f_5;
-        //df = Df_6;
+        dxf = Dxf_5;
+        dyf = Dyf_5;
+        dxyf = DxDyf_5;
         break;
     case 6:
         f_name = "f (x) = 1/(25*x*x + 1)";
         f = f_6;
-        //df = Df_6;
+        dxf = Dxf_6;
+        dyf = Dyf_6;
+        dxyf = DxDyf_6;
         break;
     case 7:
         f_name = "f (x) = 1/(25*x*x + 1)";
         f = f_7;
-        //df = Df_6;
+        dxf = Dxf_7;
+        dyf = Dyf_7;
+        dxyf = DxDyf_7;
         break;
     }
 
