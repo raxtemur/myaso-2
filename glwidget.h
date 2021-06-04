@@ -19,12 +19,19 @@ class myGLWidget:public QOpenGLWidget
 	virtual void resizeGL(int nWidth, int nHeight);
 	virtual void keyPressEvent(QKeyEvent* e);
 
+    double (*f)(double, double);
+    double (*dxf)(double, double);
+
 	void setProjectionMatrix();
 	void setDefaultCamera();
+    void change_func();
 
-	float	angle_h, angle_v;
+    float	angle_h, angle_v;
 	float	camera_p;
 	float	aspect;
+    int func_id;
+    QString f_name, mode_name;
+
 };
 
 #endif

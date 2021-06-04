@@ -11,6 +11,8 @@ void myGLWidget::initializeGL()
 	glClearColor(1.0, 1.0, 1.0, 1.0);
 
 	setDefaultCamera();
+
+    f = f_0;
 }
 
 void myGLWidget::paintGL()
@@ -41,19 +43,19 @@ void myGLWidget::paintGL()
 
 			x = (x_max - x_min) * i / (x_n - 1) + x_min;
 			y = (y_max - y_min) * j / (y_n - 1) + y_min;
-			z = func(x, y);
+            z = f(x, y);
 			glVertex3d(x, y, z);
 			x = (x_max - x_min) * (i + 1) / (x_n - 1) + x_min;
 			y = (y_max - y_min) * j / (y_n - 1) + y_min;
-			z = func(x, y);
+            z = f(x, y);
 			glVertex3d(x, y, z);
 			x = (x_max - x_min) * (i + 1) / (x_n - 1) + x_min;
 			y = (y_max - y_min) * (j + 1) / (y_n - 1) + y_min;
-			z = func(x, y);
+            z = f(x, y);
 			glVertex3d(x, y, z);
 			x = (x_max - x_min) * i / (x_n - 1) + x_min;
 			y = (y_max - y_min) * (j + 1) / (y_n - 1) + y_min;
-			z = func(x, y);
+            z = f(x, y);
 			glVertex3d(x, y, z);
 		}
 
@@ -71,6 +73,8 @@ void myGLWidget::resizeGL(int nWidth, int nHeight)
 
 #define ANGLE_DIFF	(5)
 #define POSITION_DIFF	(0.1)
+
+
 
 void myGLWidget::keyPressEvent(QKeyEvent* e)
 {
@@ -96,6 +100,10 @@ void myGLWidget::keyPressEvent(QKeyEvent* e)
 	case Qt::Key_Minus:
 		camera_p += 0.1;
 		break;
+    case Qt::Key_1:
+        change_func();
+        break;
+
 	}
 
 	update();
@@ -151,4 +159,54 @@ void myGLWidget::setDefaultCamera()
 	angle_h = 45;
 	angle_v = 20;
 	aspect = 1.0 * width() / height();
+}
+
+void myGLWidget::change_func()
+{
+    func_id = (func_id + 1) % 7;
+
+    switch (func_id) {
+    case 0:
+        f_name = "f (x) = 1";
+        f = f_0;
+        //dxf = Dxf_0;
+        break;
+    case 1:
+        f_name = "f (x) = x";
+        f = f_1;
+        //df = Df_1;
+        break;
+    case 2:
+        f_name = "f (x) = x*x";
+        f = f_2;
+        //df = Df_2;
+        break;
+    case 3:
+        f_name = "f (x) = x*x*x";
+        f = f_3;
+        //df = Df_3;
+        break;
+    case 4:
+        f_name = "f (x) = x*x*x*x";
+        f = f_4;
+        //df = Df_4;
+        break;
+    case 5:
+        f_name = "f (x) = exp(x)";
+        f = f_5;
+        //df = Df_6;
+        break;
+    case 6:
+        f_name = "f (x) = 1/(25*x*x + 1)";
+        f = f_6;
+        //df = Df_6;
+        break;
+    case 7:
+        f_name = "f (x) = 1/(25*x*x + 1)";
+        f = f_7;
+        //df = Df_6;
+        break;
+    }
+
+    update();
 }
