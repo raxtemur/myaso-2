@@ -18,7 +18,7 @@ class myGLWidget:public QOpenGLWidget
     QString f_name, mode_name;
     double ax, bx, ay, by;
     int nx, ny, mode, acc_mode;
-    double p;
+    double p, func_max;
     double x_step, y_step;
     std::stringstream out;
 
@@ -38,11 +38,16 @@ class myGLWidget:public QOpenGLWidget
 	void setProjectionMatrix();
 	void setDefaultCamera();
     void change_func();
+    void change_mode();
     void initGrid();
     void sourceGraph();
     void approximationGraph1();
     void approximationGraph2();
     void debugOut();
+
+
+    double fp(double x, double y);
+
 
     float	angle_h, angle_v;
 	float	camera_p;

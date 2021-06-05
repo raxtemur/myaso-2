@@ -8,8 +8,10 @@
 #define MIN(a, b) ((a) > (b) ? (b) : (a))
 #define MAX(a, b) ((a) < (b) ? (b) : (a))
 
-#define X_RESOLUTION 30
-#define Y_RESOLUTION 30
+#define X_RESOLUTION 32
+#define Y_RESOLUTION 32
+#define DEF_N 8
+#define MODES 4
 
 #define ANGLE_DIFF	(5)
 #define POSITION_DIFF	(0.1)
@@ -23,13 +25,31 @@ void myGLWidget::initializeGL()
     ax = -1;    bx = 1;
     ay = -1;    by = 1;
 
-    nx = 2; ny = 2;
+    nx = DEF_N;
+    ny = DEF_N;
 
-    func_id = 1;
+    func_id = 0;
     x_step = (bx - ax) / X_RESOLUTION;
     y_step = (by - ay) / Y_RESOLUTION;
 
+    p = 0.1;
+
     change_func();
+}
+
+
+double myGLWidget::fp(double x, double y)
+{
+    double x0 = (bx+ax)/2,
+           y0 = (by+ay)/2;
+    if (p && (abs(x - x0) + abs(y - y0) < 1.e-5))
+    {
+        return f(x, y) + p*func_max;
+    }
+    else
+    {
+        return f(x, y);
+    }
 }
 
 void myGLWidget::setProjectionMatrix()
@@ -82,6 +102,13 @@ void myGLWidget::setDefaultCamera()
     angle_h = 45;
     angle_v = 20;
     aspect = 1.0 * width() / height();
+}
+
+void myGLWidget::resizeGL(int nWidth, int nHeight)
+{
+    glViewport(0, 0, nWidth, nHeight);
+    aspect = 1.0 * nWidth / nHeight;
+    update();
 }
 
 void myGLWidget::change_func()
@@ -150,10 +177,9 @@ void myGLWidget::change_func()
     update();
 }
 
-void myGLWidget::resizeGL(int nWidth, int nHeight)
+void myGLWidget::change_mode()
 {
-    glViewport(0, 0, nWidth, nHeight);
-    aspect = 1.0 * nWidth / nHeight;
+    mode = (mode + 1) % MODES;
     update();
 }
 
@@ -265,8 +291,7 @@ void myGLWidget::approximationGraph1()
     {
         for (int j=0; j < ny; j++)
         {
-            supeRcoeffsErmit(X, Y, FF, coeffs, i, j, Ax, AyT, F);
-
+            coeffsErmit(X, Y, FF, coeffs, i, j, Ax, AyT, F);
 
             if (hardDebug && (nx*ny < 10))
             {
@@ -307,14 +332,96 @@ void myGLWidget::approximationGraph1()
             for (double x = X[i]; x - X[i+1] < x_step; x+=x_step)
                 for (double y = Y[j]; y - Y[j+1] < y_step; y+=y_step)
                 {
-                    //glColor3d((bx - x) / (bx - ax), (x - ax) / (by - ay), 0.0);
                     glColor3d(0.3, 0.3, 0.1);
 
 
-                    z1 = Pf1(x, X[i],           y, Y[j],          coeffs);
-                    z2 = Pf1(x + x_step, X[i],  y, Y[j],          coeffs);
-                    z3 = Pf1(x + x_step, X[i],  y + y_step, Y[j], coeffs);
-                    z4 = Pf1(x, X[i],           y + y_step, Y[j], coeffs);
+                    z1 = Pf(x, X[i],           y, Y[j],          coeffs);
+                    z2 = Pf(x + x_step, X[i],  y, Y[j],          coeffs);
+                    z3 = Pf(x + x_step, X[i],  y + y_step, Y[j], coeffs);
+                    z4 = Pf(x, X[i],           y + y_step, Y[j], coeffs);
+
+
+                    glVertex3d(x, y, z1);
+                    glVertex3d(x + x_step, y, z2);
+                    glVertex3d(x + x_step, y + y_step, z3);
+                    glVertex3d(x, y + y_step, z4);
+                }
+        }
+    }
+
+
+    glEnd();
+}
+
+void myGLWidget::approximationGraph2()
+{
+    //double x1, x2, y1, y2;
+    bool hardDebug = 0;
+    double coeffs[4][4];
+    double	z1, z2, z3, z4;
+    double *Ax, *AyT, *F;
+
+    F = new double[16];
+    Ax = new double[16];
+    AyT = new double[16];
+
+    derivOperator(nx, ny, X, Y, FF);
+    //debugOut();
+    glBegin(GL_QUADS);
+
+    glColor3d(1.0,0.0,0.0);
+    for (int i=1; i < nx-1;  i++)
+    {
+        for (int j=1; j < ny-1; j++)
+        {
+            coeffsErmit(X, Y, FF, coeffs, i, j, Ax, AyT, F);
+
+            if (hardDebug && ((nx-1)*(ny-1) < 10))
+            {
+                out.precision(3);
+                out.str("");
+                out << "\n i, j: " << i << j << "\n";
+                out << "\n Ax:\n";
+                for (int k=0; k < 4; k++)
+                {
+                    for (int l=0; l < 4; l++)
+                    {
+                        out << std::fixed <<  Ax[k*4 + l] << "    ";
+                    }
+                    out << "\n";
+                }
+                out << "\n AyT:\n";
+                for (int k=0; k < 4; k++)
+                {
+                    for (int l=0; l < 4; l++)
+                    {
+                        out << std::fixed <<  AyT[k*4 + l] << "    ";
+                    }
+                    out << "\n";
+                }
+                out << "\n coeffs:\n";
+                for (int k=0; k < 4; k++)
+                {
+                    for (int l=0; l < 4; l++)
+                    {
+                        out << std::fixed <<  coeffs[k][l] << "    ";
+                    }
+                    out << "\n";
+                }
+                QMessageBox::warning(0, "Coeffs", QString::fromStdString(out.str()));
+
+            }
+
+            for (double x = X[i]; x - X[i+1] < x_step; x+=x_step)
+                for (double y = Y[j]; y - Y[j+1] < y_step; y+=y_step)
+                {
+                    glColor3d(0.3, 0.8, 0.1);
+
+
+                    z1 = Pf(x, X[i],           y, Y[j],          coeffs);
+                    z2 = Pf(x + x_step, X[i],  y, Y[j],          coeffs);
+                    z3 = Pf(x + x_step, X[i],  y + y_step, Y[j], coeffs);
+                    z4 = Pf(x, X[i],           y + y_step, Y[j], coeffs);
 
 
                     glVertex3d(x, y, z1);
@@ -343,9 +450,6 @@ void myGLWidget::debugOut()
         out << "\n";
     }
     QMessageBox::warning(0, "Matrix", QString::fromStdString(out.str()));
-
-
-
 }
 
 void myGLWidget::paintGL()
@@ -361,6 +465,7 @@ void myGLWidget::paintGL()
     //исходный график
     sourceGraph();
     approximationGraph1();
+    approximationGraph2();
 
     painter.beginNativePainting();
     painter.setPen("blue");
