@@ -37,6 +37,9 @@ void myGLWidget::initializeGL()
     }
 
     untigrid = 1;
+    mode = 0;
+    acc_mode = 0;
+    orig_mode = 1;
 
     func_max = (by - ay)/10;
     func_id = 0;
@@ -169,42 +172,42 @@ void myGLWidget::change_func()
         dxyf = DxDyf_1;
         break;
     case 2:
-        f_name = "f (x) = x*x";
+        f_name = "f (x) = y";
         f = f_2;
         dxf = Dxf_2;
         dyf = Dyf_2;
         dxyf = DxDyf_2;
         break;
     case 3:
-        f_name = "f (x) = x*x*x";
+        f_name = "f (x) = x+y";
         f = f_3;
         dxf = Dxf_3;
         dyf = Dyf_3;
         dxyf = DxDyf_3;
         break;
     case 4:
-        f_name = "f (x) = x*x*x*x";
+        f_name = "f (x) = |(x, y)|";
         f = f_4;
         dxf = Dxf_4;
         dyf = Dyf_4;
         dxyf = DxDyf_4;
         break;
     case 5:
-        f_name = "f (x) = exp(x)";
+        f_name = "f (x) = |(x, y)|^2";
         f = f_5;
         dxf = Dxf_5;
         dyf = Dyf_5;
         dxyf = DxDyf_5;
         break;
     case 6:
-        f_name = "f (x) = 1/(25*x*x + 1)";
+        f_name = "exp(x*x - y*y)";
         f = f_6;
         dxf = Dxf_6;
         dyf = Dyf_6;
         dxyf = DxDyf_6;
         break;
     case 7:
-        f_name = "f (x) = 1/(25*x*x + 1)";
+        f_name = "f (x) = 1/(25*(x*x + y*y) + 1)";
         f = f_7;
         dxf = Dxf_7;
         dyf = Dyf_7;
@@ -212,12 +215,6 @@ void myGLWidget::change_func()
         break;
     }
 
-    update();
-}
-
-void myGLWidget::change_mode()
-{
-    mode = (mode + 1) % MODES;
     update();
 }
 
@@ -277,8 +274,14 @@ void myGLWidget::keyPressEvent(QKeyEvent* e)
         p-=0.1;
         untigrid = 1;
         break;
+    case Qt::Key_9:
+        acc_mode = (acc_mode + 1) % 2;
+        break;
     case Qt::Key_0:
-        change_mode();
+        mode = (mode + 1) % MODES;
+        break;
+    case Qt::Key_Q:
+        orig_mode = (orig_mode + 1) % 2;
         break;
     }
 
@@ -348,6 +351,7 @@ void myGLWidget::approximationGraph1()
     bool hardDebug = 0;
     double coeffs[4][4];
     double	z1, z2, z3, z4;
+    double	z10, z20, z30, z40;
     double *Ax, *AyT, *F;
 
 
@@ -416,6 +420,20 @@ void myGLWidget::approximationGraph1()
                     glVertex3d(x + x_step, y, z2);
                     glVertex3d(x + x_step, y + y_step, z3);
                     glVertex3d(x, y + y_step, z4);
+
+                    if (acc_mode)
+                    {
+                        z10 = f(x, y);
+                        z20 = f(x + x_step, y);
+                        z30 = f(x + x_step, y+y_step);
+                        z40 = f(x, y+y_step);
+
+                        glVertex3d(x, y, z1 - z10);
+                        glVertex3d(x + x_step, y, z2 - z20);
+                        glVertex3d(x + x_step, y + y_step, z3 - z30);
+                        glVertex3d(x, y + y_step, z4 - z40);
+                    }
+
                 }
         }
     }
@@ -430,6 +448,7 @@ void myGLWidget::approximationGraph2()
     bool hardDebug = 0;
     double coeffs[4][4];
     double	z1, z2, z3, z4;
+    double	z10, z20, z30, z40;
     double *Ax, *AyT, *F;
 
     F = new double[16];
@@ -499,6 +518,19 @@ void myGLWidget::approximationGraph2()
                     glVertex3d(x + x_step, y, z2);
                     glVertex3d(x + x_step, y + y_step, z3);
                     glVertex3d(x, y + y_step, z4);
+
+                    if (acc_mode)
+                    {
+                        z10 = f(x, y);
+                        z20 = f(x + x_step, y);
+                        z30 = f(x + x_step, y+y_step);
+                        z40 = f(x, y+y_step);
+
+                        glVertex3d(x, y, z1 - z10);
+                        glVertex3d(x + x_step, y, z2 - z20);
+                        glVertex3d(x + x_step, y + y_step, z3 - z30);
+                        glVertex3d(x, y + y_step, z4 - z40);
+                    }
                 }
         }
     }
@@ -540,7 +572,8 @@ void myGLWidget::paintGL()
     }
 
     //исходный график
-    sourceGraph();
+    if (orig_mode)
+        sourceGraph();
     if (mode == 1 || mode == 3)
         approximationGraph1();
     if (mode == 2 || mode == 3)
@@ -560,7 +593,7 @@ void myGLWidget::paintGL()
 
 
     painter.drawText(0,   80, "nx ny:");
-    painter.drawText(40,  80, QString::number(nx));
+    painter.drawText(50,  80, QString::number(nx));
     painter.drawText(100, 80, QString::number(ny));
 
     /*
@@ -572,10 +605,13 @@ void myGLWidget::paintGL()
     painter.drawText(0,  100, "mode:");
     painter.drawText(50, 100, QString::number(mode));
 
-    painter.drawText(0,  120, "p:");
-    painter.drawText(50, 120, QString::number(p));
+    painter.drawText(0,  120, "acc_mode:");
+    painter.drawText(100,120, QString::number(acc_mode));
 
-    painter.drawText(0,  140, "camer:");
-    painter.drawText(50, 140, QString::number(camera_p));
+    painter.drawText(0,  140, "p:");
+    painter.drawText(50, 140, QString::number(p));
+
+    painter.drawText(0,  160, "camera:");
+    painter.drawText(70, 160, QString::number(camera_p));
     glDisable(GL_DEPTH_TEST);
 }

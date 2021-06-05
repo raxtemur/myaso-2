@@ -17,7 +17,8 @@ class myGLWidget:public QOpenGLWidget
     int func_id;
     QString f_name, mode_name;
     double ax, bx, ay, by;
-    int nx, ny, mode, acc_mode;
+    int nx, ny;
+    int mode, acc_mode, orig_mode;
     double p, func_max;
     double x_step, y_step;
 
@@ -27,7 +28,6 @@ class myGLWidget:public QOpenGLWidget
 
   public slots:
     void change_func();
-    void change_mode();
     int parse_command_line(int argc, char *argv[]);
 
   protected:
