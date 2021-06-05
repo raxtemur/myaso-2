@@ -20,7 +20,15 @@ class myGLWidget:public QOpenGLWidget
     int nx, ny, mode, acc_mode;
     double p, func_max;
     double x_step, y_step;
+
+    bool untigrid;
+    int got_args;
     std::stringstream out;
+
+  public slots:
+    void change_func();
+    void change_mode();
+    int parse_command_line(int argc, char *argv[]);
 
   protected:
 	virtual void paintGL();
@@ -28,7 +36,7 @@ class myGLWidget:public QOpenGLWidget
 	virtual void resizeGL(int nWidth, int nHeight);
 	virtual void keyPressEvent(QKeyEvent* e);
 
-    double **FF;
+    double **FF, **FF2;
     double *X, *Y;
     double (*f)(double, double);
     double (*dxf)(double, double);
@@ -36,14 +44,13 @@ class myGLWidget:public QOpenGLWidget
     double (*dxyf)(double, double);
 
 	void setProjectionMatrix();
-	void setDefaultCamera();
-    void change_func();
-    void change_mode();
+    void setDefaultCamera();
     void initGrid();
     void sourceGraph();
     void approximationGraph1();
     void approximationGraph2();
     void debugOut();
+
 
 
     double fp(double x, double y);

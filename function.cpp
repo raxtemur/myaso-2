@@ -238,7 +238,7 @@ void derivOperator(int nx, int ny, double *X, double *Y, double **FF)
     F = new double[MAX(nx, ny) - 1];
     b = new double[MAX(nx, ny) - 1];
 
-    for (int j=1; j<ny; j++)
+    for (int j=0; j<ny+1; j++)
     {
         for (int i=1; i < nx; i++)
         {
@@ -251,11 +251,11 @@ void derivOperator(int nx, int ny, double *X, double *Y, double **FF)
         }
     }
 
-    for (int i=1; i<nx; i++)
+    for (int i=0; i<nx+1; i++)
     {
         for (int j=1; j < ny; j++)
         {
-            F[i-1] = FF[2*i][2*j];
+            F[j-1] = FF[2*i][2*j];
         }
         coeffsSlpine1d(ny - 2, Y+1, F, b, Y[0], Y[ny], FF[2*i][0], FF[2*i][2*ny]);
         for (int j=1; j < ny; j++)
@@ -264,11 +264,11 @@ void derivOperator(int nx, int ny, double *X, double *Y, double **FF)
         }
     }
 
-    for (int i=1; i<nx; i++)
+    for (int i=0; i<nx+1; i++)
     {
         for (int j=1; j < ny; j++)
         {
-            F[i-1] = FF[2*i+1][2*j];
+            F[j-1] = FF[2*i+1][2*j];
         }
         coeffsSlpine1d(ny - 2, Y+1, F, b, Y[0], Y[ny], FF[2*i+1][0], FF[2*i+1][2*ny]);
         for (int j=1; j < ny; j++)

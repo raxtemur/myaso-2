@@ -8,8 +8,10 @@
 #define MIN(a, b) ((a) > (b) ? (b) : (a))
 #define MAX(a, b) ((a) < (b) ? (b) : (a))
 
-#define X_RESOLUTION 32
-#define Y_RESOLUTION 32
+#define X_RESOLUTION 128
+#define Y_RESOLUTION 128
+#define DEFAULT_A -10
+#define DEFAULT_B 10
 #define DEF_N 8
 #define MODES 4
 
@@ -22,12 +24,21 @@ void myGLWidget::initializeGL()
 
 	setDefaultCamera();
 
-    ax = -1;    bx = 1;
-    ay = -1;    by = 1;
+    if(got_args < 1)
+    {
+        ax = DEFAULT_A;    bx = DEFAULT_B;
+        ay = DEFAULT_A;    by = DEFAULT_B;
+    }
 
-    nx = DEF_N;
-    ny = DEF_N;
+    if (got_args < 2)
+    {
+        nx = DEF_N;
+        ny = DEF_N;
+    }
 
+    untigrid = 1;
+
+    func_max = (by - ay)/10;
     func_id = 0;
     x_step = (bx - ax) / X_RESOLUTION;
     y_step = (by - ay) / Y_RESOLUTION;
@@ -37,12 +48,39 @@ void myGLWidget::initializeGL()
     change_func();
 }
 
+int myGLWidget::parse_command_line(int argc, char *argv[])
+{
+    got_args = 0;
+    if (argc == 1)
+        return 0;
+
+    if (argc == 2)
+        return -1;
+
+    if (sscanf(argv[1], "%lf", &ax) != 1 || sscanf(argv[2], "%lf", &bx) != 1 || bx - ax < 1.e-6 ||
+            sscanf(argv[3], "%lf", &ay) != 1 || sscanf(argv[4], "%lf", &by) != 1 || by - ay < 1.e-6)
+        return -2;
+    else
+        got_args += 1;
+
+    if (argc > 4)
+    {
+        if ((sscanf(argv[5], "%d", &nx) != 1 || (sscanf(argv[6], "%d", &ny) != 1)) || nx <= 4 || ny <= 4)
+        {
+            return -2;
+        }
+        got_args += 1;
+    }
+
+    return 0;
+}
 
 double myGLWidget::fp(double x, double y)
 {
     double x0 = (bx+ax)/2,
-           y0 = (by+ay)/2;
-    if (p && (abs(x - x0) + abs(y - y0) < 1.e-5))
+           y0 = (by+ay)/2,
+           delta = ((bx-ax)/X_RESOLUTION + (by-ay)/Y_RESOLUTION)*2;
+    if (p && (fabs(x - x0) + fabs(y - y0) < delta))
     {
         return f(x, y) + p*func_max;
     }
@@ -98,7 +136,7 @@ void myGLWidget::setProjectionMatrix()
 
 void myGLWidget::setDefaultCamera()
 {
-    camera_p = 7;
+    camera_p = 2*MAX((bx-ax), (by-ay));
     angle_h = 45;
     angle_v = 20;
     aspect = 1.0 * width() / height();
@@ -202,17 +240,46 @@ void myGLWidget::keyPressEvent(QKeyEvent* e)
         angle_h += 5.0;
         break;
     case Qt::Key_Plus:
-        camera_p = MAX(camera_p - 0.1, 7);
+        camera_p = MAX(camera_p - 0.1, 6);
         break;
     case Qt::Key_Minus:
         camera_p += 0.1;
         break;
-    case Qt::Key_1:
-        change_func();
-        break;
+
     case Qt::Key_D:
         debugOut();
-
+        break;
+    case Qt::Key_1:
+        change_func();
+        untigrid = 1;
+        break;
+    case Qt::Key_4:     //increase acc
+        if (nx < 128 && ny < 128)
+        {
+            nx*=2;
+            ny*=2;
+        }
+        untigrid = 1;
+        break;
+    case Qt::Key_5:     //decrease acc
+        if (nx > 8 && ny > 8)
+        {
+            nx/=2;
+            ny/=2;
+        }
+        untigrid = 1;
+        break;
+    case Qt::Key_6:     //increase disturb
+        p+=0.1;
+        untigrid = 1;
+        break;
+    case Qt::Key_7:     //decrease disturb
+        p-=0.1;
+        untigrid = 1;
+        break;
+    case Qt::Key_0:
+        change_mode();
+        break;
     }
 
     update();
@@ -222,7 +289,8 @@ void myGLWidget::initGrid()
 {
     double x_delta = (bx-ax)/nx,
            y_delta = (by-ay)/ny;
-    FF = new double *[2*(nx+1)];
+    FF  = new double *[2*(nx+1)];
+    FF2 = new double *[2*(nx+1)];
     X  = new double [nx+1];
     Y  = new double [ny+1];
 
@@ -230,11 +298,14 @@ void myGLWidget::initGrid()
     {
         FF[2*i]     = new double [2*(ny + 1)];
         FF[2*i + 1] = new double [2*(ny + 1)];
+        FF2[2*i]     = new double [2*(ny + 1)];
+        FF2[2*i + 1] = new double [2*(ny + 1)];
         for (int j=0; j < ny+1; j++)
         {
             X[i] = ax + i*x_delta;
             Y[j] = ay + j*y_delta;
-            FF[2*i][2*j]     = f(X[i], Y[j]);
+            FF[2*i][2*j]      = fp(X[i], Y[j]);
+            FF2[2*i][2*j]     = fp(X[i], Y[j]);
             FF[2*i+1][2*j]   = dxf(X[i], Y[j]);
             FF[2*i][2*j+1]   = dyf(X[i], Y[j]);
             FF[2*i+1][2*j+1] = dxyf(X[i], Y[j]);
@@ -254,16 +325,16 @@ void myGLWidget::sourceGraph()
 
             glColor3d((bx - x) / (bx - ax), (y - ay) / (by - ay), 0.0);
 
-            z = f(x, y);
+            z = fp(x, y);
             glVertex3d(x, y, z);
 
-            z = f(x + x_step, y);
+            z = fp(x + x_step, y);
             glVertex3d(x + x_step, y, z);
 
-            z = f(x + x_step, y + y_step);
+            z = fp(x + x_step, y + y_step);
             glVertex3d(x + x_step, y + y_step, z);
 
-            z = f(x, y + y_step);
+            z = fp(x, y + y_step);
             glVertex3d(x, y + y_step, z);
         }
 
@@ -276,7 +347,7 @@ void myGLWidget::approximationGraph1()
     //double x1, x2, y1, y2;
     bool hardDebug = 0;
     double coeffs[4][4];
-    double	z1, z2, z3, z4, z;
+    double	z1, z2, z3, z4;
     double *Ax, *AyT, *F;
 
 
@@ -365,7 +436,7 @@ void myGLWidget::approximationGraph2()
     Ax = new double[16];
     AyT = new double[16];
 
-    derivOperator(nx, ny, X, Y, FF);
+    //derivOperator(nx, ny, X, Y, FF2);
     //debugOut();
     glBegin(GL_QUADS);
 
@@ -374,7 +445,7 @@ void myGLWidget::approximationGraph2()
     {
         for (int j=1; j < ny-1; j++)
         {
-            coeffsErmit(X, Y, FF, coeffs, i, j, Ax, AyT, F);
+            coeffsErmit(X, Y, FF2, coeffs, i, j, Ax, AyT, F);
 
             if (hardDebug && ((nx-1)*(ny-1) < 10))
             {
@@ -461,15 +532,50 @@ void myGLWidget::paintGL()
 
     glEnable(GL_DEPTH_TEST);
 
-    initGrid();
+    if (untigrid)
+    {
+        initGrid();
+        derivOperator(nx, ny, X, Y, FF2);
+        untigrid = 0;
+    }
+
     //исходный график
     sourceGraph();
-    approximationGraph1();
-    approximationGraph2();
+    if (mode == 1 || mode == 3)
+        approximationGraph1();
+    if (mode == 2 || mode == 3)
+        approximationGraph2();
 
     painter.beginNativePainting();
     painter.setPen("blue");
-    painter.drawText(10, 20, "Sosi!");
+    painter.drawText(0, 20, f_name);
 
+    painter.drawText(0,   40, "ax, bx:");
+    painter.drawText(50,  40, QString::number(ax, 'g', 3));
+    painter.drawText(100, 40, QString::number(bx, 'g', 3));
+
+    painter.drawText(0,   60, "ay, by:");
+    painter.drawText(50,  60, QString::number(ay, 'g', 3));
+    painter.drawText(100, 60, QString::number(by, 'g', 3));
+
+
+    painter.drawText(0,   80, "nx ny:");
+    painter.drawText(40,  80, QString::number(nx));
+    painter.drawText(100, 80, QString::number(ny));
+
+    /*
+    painter.drawText(0, 60, "min, max:");
+    painter.drawText(70,   60, QString::number(func_min, 'g', 3));
+    painter.drawText(120,  60, QString::number(func_max, 'g', 3));
+*/
+
+    painter.drawText(0,  100, "mode:");
+    painter.drawText(50, 100, QString::number(mode));
+
+    painter.drawText(0,  120, "p:");
+    painter.drawText(50, 120, QString::number(p));
+
+    painter.drawText(0,  140, "camer:");
+    painter.drawText(50, 140, QString::number(camera_p));
     glDisable(GL_DEPTH_TEST);
 }
